@@ -192,7 +192,7 @@ namespace Rasterizer
 		float dotproduct = vTopBot.mPosition.CrossMag(vTopMid.mPosition);
 		bool midIsLeft = dotproduct < 0;
 
-		//
+		
 		float mTopMid = CalSlopeInv(vMid->mPosition, vTop->mPosition);
 		Color cTopMidStep =  CalColorStep(vMid->mColor, vTop->mColor);
 
@@ -222,9 +222,15 @@ namespace Rasterizer
 		}
 
 		if (midIsLeft)
+		{
 			xL = Round(vMid->mPosition.x);
+			cL = vMid->mColor;
+		}
 		else
+		{
 			xR = Round(vMid->mPosition.x);
+			cR = vMid->mColor;
+		}
 
 		for (; y >= Round(vBot->mPosition.y) ; --y)
 		{
