@@ -5,71 +5,36 @@ namespace Rasterizer
 	EDrawTriangleMethod CurrentTriangleMethod;
 	namespace TriangleHelperFunctions
 	{
-		float m = 0, b = 0;
+		float m = 0;
 		unsigned int y = 0, x = 0;
-		int dx = 0, dy = 0;
-		unsigned int ep = 0;  //endpoint
+		float dx = 0, dy = 0;
+		unsigned int sP = 0 , eP = 0;  //startingPoint, endPoint
 		int step = 0;
-		// calDelta based on  independent variables
-
-		void CalStep(const int p1i, const int p2i)
+		float CalSlopeInv(const AEVec2  p0, const AEVec2 p1)
 		{
-			step = (p2i - p1i) > 0 ? 1 : -1; // Step: going to the left or right
-			ep = p2i + step;
-		}
-
-		//simple interpolate
-		void Interpolate(unsigned int* p1i, const int p2i, const Color& c)
-		{
-			CalStep(*p1i, p2i);
-			for (; *p1i != ep; *p1i += step)
+			dy = (p0.y - p1.y);
+			dx = (p0.x - p1.x);
+			if (Round(dy))
 			{
-				FrameBuffer::SetPixel(x, y, c);
+				return  dx / dy;
 			}
-		}
-		float CalRateOfChange(const AEVec2 p1, const AEVec2 p2)
-		{
-			return m = p2.y - p1.y / p2.x - p1.x;
+			else
+			{
+				return dy / dx;
+			}
 		}
 		float CalSlopeInv(const AEVec2* p0, const AEVec2* p1)
 		{
-			float dy = (p0->y - p1->y);
-			float dx = (p0->x - p1->x);
-			if (Round(dy))
-			{
-				return  dx / dy;
-			}
-			else
-			{
-				return dy / dx;
-			}
+			return CalSlopeInv(*p0, *p1);
 		}
 
-		Color CalColorSlopeInv(const Color* c0, const Color* c1)
-		{
-			Color CStep = *c0 - *c1;
-			float dy = (c0->y - c1->y);
-			float dx = (c0->x - c1->x);
-			if (Round(dy))
-			{
-				return  dx / dy;
-			}
-			else
-			{
-				return dy / dx;
-			}
-		}
 
-		//calculate Deltas
-		void CalDeltas(const AEVec2 p1, const AEVec2 p2)
+
+		Color CalColorStep(const Color c0, const Color c1)
 		{
-			dy = Round(p2.y - p1.y);
-			dx = Round(p2.x - p1.x);
-		}
-		void setStartingPoint(const AEVec2& p)
-		{
-			x = Round(p.x);
-			y = Round(p.y);
+			if (Round(dy)) { return (c0 - c1) / abs(dy); }
+			return c0;
+
 		}
 	}	
 	using namespace TriangleHelperFunctions;
@@ -203,58 +168,76 @@ namespace Rasterizer
 			break;
 		}
 	}
-
+	Vertex operator - (Vertex own, const Vertex& other) 
+	{
+		Vertex result;  
+		result.mColor = own.mColor - other.mColor;
+		result.mPosition = own.mPosition - other.mPosition;
+		return result;
+	}
 	void DrawTriangleBiLinear(const Vertex& v0, const Vertex& v1, const Vertex& v2)
 	{
-		Ve
-		const AEVec2* vTop = &v0.mPosition;
-		const AEVec2* vMid = &v1.mPosition;
-		const AEVec2* vBot = &v2.mPosition;
+		const Vertex* vTop = &v0;
+		const Vertex* vMid = &v1;
+		const Vertex* vBot = &v2;
 
-		if (vTop->y < vMid->y) std::swap(v0, v1);
-		if (vMid->y < vBot->y) std::swap(v1, v2);
-		if (vTop->y < vMid->y) std::swap(v0, v1);
 
-		AEVec2 vTopBot = (*vTop) - (*vBot);
-		AEVec2 vTopMid = (*vTop) - (*vMid);
-		float dotproduct = vTopBot.CrossMag(vTopMid);
+
+		if (vTop->mPosition.y < vMid->mPosition.y) std::swap(vTop, vMid);
+		if (vMid->mPosition.y < vBot->mPosition.y) std::swap(vMid, vBot);
+		if (vTop->mPosition.y < vMid->mPosition.y) std::swap(vTop, vMid);
+
+		Vertex vTopBot = (*vTop) - (*vBot);
+		Vertex vTopMid = (*vTop) - (*vMid);
+		float dotproduct = vTopBot.mPosition.CrossMag(vTopMid.mPosition);
 		bool midIsLeft = dotproduct < 0;
-		float mTopMid = CalSlopeInv(vMid, vTop);
-		float mTopBot = CalSlopeInv(vBot, vTop);
-		float mMidBot = CalSlopeInv(vBot, vMid);
 
-		Color cStepmTopMid = (v1.mColor- v0.mColor);
-		Color cStepmTopMid = CalSlopeInv(v1.mColor, v0.mColor);
-		Color cStepmTopMid = CalSlopeInv(v1.mColor, v0.mColor);
+		//
+		float mTopMid = CalSlopeInv(vMid->mPosition, vTop->mPosition);
+		Color cTopMidStep =  CalColorStep(vMid->mColor, vTop->mColor);
 
-		float colorstep = 
-		float xL = Round(vTop->x);
-		float xR = Round(vTop->x);
+		float mTopBot = CalSlopeInv(vBot->mPosition, vTop->mPosition);
+		Color cTopBotStep =  CalColorStep(vBot->mColor, vTop->mColor);
+		
+		float mMidBot = CalSlopeInv(vBot->mPosition, vMid->mPosition);
+		Color cMidBotStep = CalColorStep(vBot->mColor, vMid->mColor);
 
-		int y = 0;
-		int x = 0;
-		for (y = Ceiling(vTop->y); y >= Ceiling(vMid->y) + 1; --y)
+		float xL, xR;xL =xR = Round(vTop->mPosition.x);
+		Color cL, cR, cStep, c; cL = cR = vTop->mColor;
+
+		for (y = Ceiling(vTop->mPosition.y); y >= Ceiling(vMid->mPosition.y) + 1; --y)
 		{
+			c = cL;
+			cStep = (cR - cL) / abs(xR - xL);
 			for (x = Round(xL); x <= Round(xR) - 1; ++x)
 			{
 				FrameBuffer::SetPixel(x, y, c);
+				c += cStep;
 			}
+			cL += midIsLeft ? cTopMidStep : cTopBotStep;
+			cR += midIsLeft ? cTopBotStep : cTopMidStep;
 
 			xL -= midIsLeft ? mTopMid : mTopBot;
 			xR -= midIsLeft ? mTopBot : mTopMid;
 		}
 
 		if (midIsLeft)
-			xL = Round(vMid->x);
+			xL = Round(vMid->mPosition.x);
 		else
-			xR = Round(vMid->x);
+			xR = Round(vMid->mPosition.x);
 
-		for (; y >= Ceiling(vBot->y) + 1; --y)
+		for (; y >= Round(vBot->mPosition.y) ; --y)
 		{
-			for (x = Round(xL); x <= Round(xR) - 1; ++x)
+			c = cL;
+			cStep = (cR - cL) / abs(xR - xL);
+			for (x = Round(xL); x <= Round(xR); ++x)
 			{
 				FrameBuffer::SetPixel(x, y, c);
+				c += cStep;
+
 			}
+			cL += midIsLeft ? cMidBotStep : cTopBotStep;
+			cR += midIsLeft ? cTopBotStep : cMidBotStep;
 			xL -= midIsLeft ? mMidBot : mTopBot;
 			xR -= midIsLeft ? mTopBot : mMidBot;
 

@@ -75,10 +75,12 @@ namespace Rasterizer
 	void DrawDiagonalLine(const AEVec2& p1, const AEVec2& p2, const Color& c) {
 		setStartingPoint(p1);
 		CalStep(x, Round(p2.x));
+		int ystep = (p2.y - p1.y) > 0 ? 1 : -1;
+
 		for (; x != ep; x += step)
 		{
 			FrameBuffer::SetPixel(x, y, c);
-			y++;
+			y+=ystep;
 		}
 	}
 
