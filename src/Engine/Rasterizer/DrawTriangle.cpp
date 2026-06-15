@@ -1,14 +1,17 @@
 #include <AEEngine.h>
 #include "Rasterizer.h"
+
+
 namespace Rasterizer
 {
 	EDrawTriangleMethod CurrentTriangleMethod;
 	namespace TriangleHelperFunctions
 	{
 		float m = 0;
-		unsigned int y = 0, x = 0;
 		float dx = 0, dy = 0;
-		unsigned int sP = 0 , eP = 0;  //startingPoint, endPoint
+		// screen space;  when initialized again as float, 
+		//they'll be real space
+		int x, y;
 		int step = 0;
 		float CalSlopeInv(const AEVec2  p0, const AEVec2 p1)
 		{
@@ -36,6 +39,49 @@ namespace Rasterizer
 			return c0;
 
 		}
+
+		float AEVec3dotProduct(AEVec3 const v0, AEVec3 const v1)
+		{
+			return float(v0.x * v1.x + v0.y * v1.y + v0.z * v1.z);
+
+		}
+
+		AEVec3 AEVec3FromV2(AEVec2 const v0, float z)
+		{
+			return AEVec3(v0.x, v0.y, z);
+		}
+
+		AEVec2 AEVec2FromV3(AEVec3 const v0)
+		{
+			return AEVec2(v0.x, v0.y);
+		}
+		float CrossMag(float x0, float x1, AEVec2 c)
+		{
+			return CrossMag(x0, c.x, x1, c.y);
+		}
+		float CrossMag(float x0, float r0, float x1, float r1)
+		{
+
+			return x0 * r1 - x1 * r0;
+
+		}
+		AEVec2 CalNormalAandB(AEVec2 const v0, AEVec2 const v1, float const c0, float const c1)
+		{
+
+			return AEVec2(CrossMag(v0.x, c0, v1.x, c1), CrossMag(v0.y, c0, v1.y, c1));
+		}
+
+		AEVec3 CalNormal(AEVec2 const v0, AEVec2 const v1, float const c0, float const c1)
+		{
+			return AEVec3(v0.x, v0.y, c0).Cross(AEVec3(v1.x, v1.y, c1)).Normalize();
+		}
+		AEVec3 CalD(AEVec3 const n, AEVec2 const v, float c)
+		{
+			return -AEVec3dotProduct(AEVec3(v0.x, v0.y, c0).Cross(AEVec3(v1.x, v1.y, c1)).Normalize();
+		}
+
+		AEVec3()
+
 	}	
 	using namespace TriangleHelperFunctions;
 
@@ -61,9 +107,6 @@ namespace Rasterizer
 
 		float xL = Round(vTop->x);
 		float xR = Round(vTop->x);
-
-		int y = 0;
-		int x = 0;
 		for (y = Round(vTop->y); y >= Round(vMid->y); --y)
 		{
 			for (x = Round(xL); x <= Round(xR); ++x)
@@ -115,8 +158,6 @@ namespace Rasterizer
 			float xL = Round(vTop->x);
 			float xR = Round(vTop->x);
 
-			int y = 0;
-			int x = 0;
 			for (y = Ceiling(vTop->y); y >= Ceiling(vMid->y) + 1; --y)
 			{
 				for (x = Round(xL); x <= Round(xR) - 1; ++x)
@@ -248,7 +289,7 @@ namespace Rasterizer
 		}
 	}
 
-	void DrawTrianglePlaneNormal(const Vertex& v0, const Vertex& v1, const Vertex& v2)
+	void DrawPlaneNormalNaive(const Vertex& v0, const Vertex& v1, const Vertex& v2)
 	{
 		const Vertex* vTop = &v0;
 		const Vertex* vMid = &v1;
@@ -264,26 +305,37 @@ namespace Rasterizer
 		bool midIsLeft = dotproduct < 0;
 
 		float mTopMid = CalSlopeInv(vMid->mPosition, vTop->mPosition);
-		Color cTopMidStep = CalColorStep(vMid->mColor, vTop->mColor);
-
 		float mTopBot = CalSlopeInv(vBot->mPosition, vTop->mPosition);
-		Color cTopBotStep = CalColorStep(vBot->mColor, vTop->mColor);
-
 		float mMidBot = CalSlopeInv(vBot->mPosition, vMid->mPosition);
-		Color cMidBotStep = CalColorStep(vBot->mColor, vMid->mColor);
-
 		float xL, xR; xL = xR = Round(vTop->mPosition.x);
-		Color cL, cR, cStep, c; cL = cR = vTop->mColor;
 
+		// c == dotproduct is the crossmag of vTopBot and vTopMid;
+		AEVec3 nR = AEVec3FromV2(CalNormalAandB(vTopBot.mPosition, vTopMid.mPosition, vTopBot.mColor.r, vTopMid.mColor.r),
+							dotproduct); 
 
+		nR = CalNormal(vTopBot.mPosition, vTopMid.mPosition, vTopBot.mColor.r, vTopMid.mColor.r);
+		
+		float dR = ;
 
-
-
-
-
-
+		
+		return
+		
+			, dG = ..., dB = ..., dA = ...;
+		for (yT->yM) { // Traversal Loop
+			for (xL->xR) {
+				Color c;
+				c.r = -(nR.x * x + nR.y * y + dR) / dotproduct;
+				c.G = ....;
+				c.B = ....;
+				c.A = ....;
+				SetPixel(x, y, c);
+			}// end of scan line
+			xL -= slopeLeft; xR -= slopeRight;
+		}// end of triangle traversal
+	}
 	}
 
+	}
 
 	EDrawTriangleMethod GetDrawTriangleMethod() {
 		return CurrentTriangleMethod;
