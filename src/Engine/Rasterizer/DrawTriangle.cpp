@@ -160,7 +160,7 @@ namespace Rasterizer
 			DrawTriangleBiLinear(v0, v1, v2);
 			break;
 		case EDrawTriangleMethod::eDT_PLANE_NORMAL:
-
+			DrawTrianglePlaneNormal(v0, v2, v2);
 			break;
 		case EDrawTriangleMethod::eDT_BARYCENTRIC:
 			break;
@@ -175,13 +175,13 @@ namespace Rasterizer
 		result.mPosition = own.mPosition - other.mPosition;
 		return result;
 	}
+
+
 	void DrawTriangleBiLinear(const Vertex& v0, const Vertex& v1, const Vertex& v2)
 	{
 		const Vertex* vTop = &v0;
 		const Vertex* vMid = &v1;
 		const Vertex* vBot = &v2;
-
-
 
 		if (vTop->mPosition.y < vMid->mPosition.y) std::swap(vTop, vMid);
 		if (vMid->mPosition.y < vBot->mPosition.y) std::swap(vMid, vBot);
@@ -191,8 +191,7 @@ namespace Rasterizer
 		Vertex vTopMid = (*vTop) - (*vMid);
 		float dotproduct = vTopBot.mPosition.CrossMag(vTopMid.mPosition);
 		bool midIsLeft = dotproduct < 0;
-
-		
+				
 		float mTopMid = CalSlopeInv(vMid->mPosition, vTop->mPosition);
 		Color cTopMidStep =  CalColorStep(vMid->mColor, vTop->mColor);
 
@@ -246,10 +245,45 @@ namespace Rasterizer
 			cR += midIsLeft ? cTopBotStep : cMidBotStep;
 			xL -= midIsLeft ? mMidBot : mTopBot;
 			xR -= midIsLeft ? mTopBot : mMidBot;
-
 		}
+	}
+
+	void DrawTrianglePlaneNormal(const Vertex& v0, const Vertex& v1, const Vertex& v2)
+	{
+		const Vertex* vTop = &v0;
+		const Vertex* vMid = &v1;
+		const Vertex* vBot = &v2;
+
+		if (vTop->mPosition.y < vMid->mPosition.y) std::swap(vTop, vMid);
+		if (vMid->mPosition.y < vBot->mPosition.y) std::swap(vMid, vBot);
+		if (vTop->mPosition.y < vMid->mPosition.y) std::swap(vTop, vMid);
+
+		Vertex vTopBot = (*vTop) - (*vBot);
+		Vertex vTopMid = (*vTop) - (*vMid);
+		float dotproduct = vTopBot.mPosition.CrossMag(vTopMid.mPosition);
+		bool midIsLeft = dotproduct < 0;
+
+		float mTopMid = CalSlopeInv(vMid->mPosition, vTop->mPosition);
+		Color cTopMidStep = CalColorStep(vMid->mColor, vTop->mColor);
+
+		float mTopBot = CalSlopeInv(vBot->mPosition, vTop->mPosition);
+		Color cTopBotStep = CalColorStep(vBot->mColor, vTop->mColor);
+
+		float mMidBot = CalSlopeInv(vBot->mPosition, vMid->mPosition);
+		Color cMidBotStep = CalColorStep(vBot->mColor, vMid->mColor);
+
+		float xL, xR; xL = xR = Round(vTop->mPosition.x);
+		Color cL, cR, cStep, c; cL = cR = vTop->mColor;
+
+
+
+
+
+
+
 
 	}
+
 
 	EDrawTriangleMethod GetDrawTriangleMethod() {
 		return CurrentTriangleMethod;

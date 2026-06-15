@@ -65,4 +65,7 @@ namespace Rasterizer
 	///	\param	v2	Third triangle vertex (position/color).
 
 	void DrawTriangleBiLinear(const Vertex& v0, const Vertex& v1, const Vertex& v2);
+
+	void DrawTrianglePlaneNormal(const Vertex& v0, const Vertex& v1, const Vertex& v2;
+
 }
