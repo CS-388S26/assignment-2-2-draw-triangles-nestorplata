@@ -310,19 +310,17 @@ namespace Rasterizer
 		float xL, xR; xL = xR = Round(vTop->mPosition.x);
 
 		// c == dotproduct is the crossmag of vTopBot and vTopMid;
-		AEVec3 nR = AEVec3FromV2(CalNormalAandB(vTopBot.mPosition, vTopMid.mPosition, vTopBot.mColor.r, vTopMid.mColor.r),
-							dotproduct); 
+		AEVec3 nR = AEVec3FromV2(CalNormalAandB(vTopBot.mPosition, vTopMid.mPosition, vTopBot.mColor.r, vTopMid.mColor.r)
+			, dotproduct).Normalize(); 
+		float dR = -AEVec3dotProduct(nR, AEVec3FromV2(vTop->mPosition, 0));
+		Color cStepX = Color( - AEVec2(nR.x, nR.y),  ) nR.z;//sa
 
-		nR = CalNormal(vTopBot.mPosition, vTopMid.mPosition, vTopBot.mColor.r, vTopMid.mColor.r);
-		
-		float dR = ;
-
-		
-		return
-		
-			, dG = ..., dB = ..., dA = ...;
+		Color c, cL;
+		cL = vTop->mColor;
 		for (yT->yM) { // Traversal Loop
+			c=cL
 			for (xL->xR) {
+				c += cStepX;
 				Color c;
 				c.r = -(nR.x * x + nR.y * y + dR) / dotproduct;
 				c.G = ....;
@@ -330,7 +328,10 @@ namespace Rasterizer
 				c.A = ....;
 				SetPixel(x, y, c);
 			}// end of scan line
-			xL -= slopeLeft; xR -= slopeRight;
+			float leftSlope = xL -= midIsLeft ? mMidBot : mTopBot;
+			xR -= midIsLeft ? mTopBot : mMidBot;
+
+				c= cStepY +cStepX = 
 		}// end of triangle traversal
 	}
 	}
